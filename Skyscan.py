@@ -1,9 +1,8 @@
 import requests
 
-#TODO Handle - One Way Trips
+#TODO Add live flight methods
 
-
-API_KEY = 'YOUR_SUPER_SECRET_API_KEY'
+API_KEY = 'YOUR_SECRET_API_KEY'
 
 
 class ExceptionHandling(Exception):
@@ -30,9 +29,9 @@ def error_handling(r,api):
     if r.status_code == 400:
         raise BadRequest('Input validation failed')
     if r.status_code == 403:
-        raise InvalidAPI('{} is an invalid API Key error'.format(api))
+        raise InvalidAPI('Error: {} is an invalid API Key'.format(api))
     if r.status_code == 429:
-        raise TooManyRequests('{} has made to many requests in the last minute'.format(api))
+        raise TooManyRequests('Error: {} has made to many requests in the last minute'.format(api))
     if r.status_code == 500:
         raise InternalError('Internal server error. Has been logged with Skyscanner')
     else:
@@ -40,9 +39,14 @@ def error_handling(r,api):
 
 
 def get_dates_cache(market,currency,locale,origin,destination,outbound,inbound,api):
-    q_url = 'http://partners.api.skyscanner.net/apiservices/browsedates/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
-        market, currency, locale, origin, destination, outbound, inbound, api
-    )
+    if inbound != '':
+        q_url = 'http://partners.api.skyscanner.net/apiservices/browsedates/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
+            market, currency, locale, origin, destination, outbound, inbound, api
+        )
+    else:
+        q_url = 'http://partners.api.skyscanner.net/apiservices/browsedates/v1.0/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
+            market, currency, locale, origin, destination, outbound, api
+        )
 
     r = requests.get(q_url)
     result = error_handling(r,api)
@@ -61,21 +65,32 @@ def get_routes_cache(market, currency, locale, origin, desitination, outbound, i
 
 
 def get_quotes_cache(market,currency,locale,origin,desitination,outbound,inbound,api):
-    q_url = 'http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
-        market,currency,locale,origin,desitination,outbound,inbound,api
-    )
+    if inbound != '':
+        q_url = 'http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
+            market, currency, locale, origin, desitination, outbound, inbound, api
+        )
+    else:
+        q_url = 'http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
+            market, currency, locale, origin, desitination, outbound, api
+        )
+
     r = requests.get(q_url)
     result = error_handling(r,api)
     return result
 
 def get_cache_grid(market,currency,locale,origin,destination,outbound,inbound,api):
-    q_url = 'http://partners.api.skyscanner.net/apiservices/browsegrid/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
-        market,currency,locale,origin,destination,outbound,inbound,api
-    )
+    if inbound != '':
+        q_url = 'http://partners.api.skyscanner.net/apiservices/browsegrid/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
+            market, currency, locale, origin, destination, outbound, inbound, api
+        )
+    else:
+        q_url = 'http://partners.api.skyscanner.net/apiservices/browsegrid/v1.0/{}/{}/{}/{}/{}/{}?apiKey={}'.format(
+            market, currency, locale, origin, destination, outbound, api
+        )
 
     r = requests.get(q_url)
     result = error_handling(r,api)
-    
+
     return result
 
 
@@ -96,17 +111,18 @@ class Skyscanflightcache(object):
                                    inbound_date, self.api_key)
         return results
 
-    def browse_qoutes(self,origin,destination,outbound_date,inbound_date):
+    def browse_qoutes(self,origin,destination,outbound_date,inbound_date=''):
         results = get_quotes_cache(self.market,self.currency,self.locale,origin,destination,outbound_date,
                          inbound_date,self.api_key)
         return results
 
-    def browse_cache_grid(self,origin,destination,outbound_date,inbound_date):
+    def browse_cache_grid(self,origin,destination,outbound_date,inbound_date=''):
         results = get_cache_grid(self.market,self.currency,self.locale,origin,destination,outbound_date,
                                  inbound_date,self.api_key)
         return results
 
-    def browse_dates(self,origin,destination,outbound_date,inbound_date):
+    def browse_dates(self,origin,destination,outbound_date,inbound_date=''):
         results = get_dates_cache(self.market,self.currency,self.locale,origin,destination,outbound_date,inbound_date,
                                   self.api_key)
         return results
+
